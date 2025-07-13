@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4 # Optional, but good practice if you have other files
+        uses: actions/checkout@v4
 
       - name: Download ngrok
         run: |
@@ -18,12 +18,14 @@ jobs:
 
       - name: Extract ngrok
         run: |
+          # The ngrok zip usually extracts ngrok.exe directly to the current directory.
           Expand-Archive -Path ngrok.zip -DestinationPath .
         shell: powershell
 
       - name: Authenticate ngrok
         run: |
-          ./ngrok/ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+          # Use .\ngrok.exe as the executable is directly in the current directory after extraction.
+          .\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
         shell: powershell
 
       - name: Enable RDP and Configure User
@@ -39,7 +41,7 @@ jobs:
 
           # Create a new user and add to Administrators group
           $username = "runneradmin"
-          $password = "Password123*#@" # ***CHANGE THIS PASSWORD***
+          $password = "Password123*#@" # ***CHANGE THIS PASSWORD TO SOMETHING SECURE!***
 
           net user $username $password /add
           net localgroup administrators $username /add
@@ -51,7 +53,8 @@ jobs:
       - name: Start ngrok tunnel
         run: |
           Write-Host "Starting ngrok tunnel for RDP on port 3389..."
-          ./ngrok/ngrok.exe tcp 3389
+          # Use .\ngrok.exe
+          .\ngrok.exe tcp 3389
         shell: powershell
         # This step will block and keep the job running as long as the tunnel is active.
         # Look for the ngrok forwarding address in the logs of this step.

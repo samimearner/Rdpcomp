@@ -1,0 +1,58 @@
+name: Free RDP via GitHub Actions & ngrok
+
+on:
+  workflow_dispatch # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  build:
+    runs-on: windows-latest # Use the latest Windows runner
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Optional, but good practice if you have other files
+
+      - name: Download ngrok
+        run: |
+          Invoke-WebRequest -Uri https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+        shell: powershell
+
+      - name: Extract ngrok
+        run: |
+          Expand-Archive -Path ngrok.zip -DestinationPath .
+        shell: powershell
+
+      - name: Authenticate ngrok
+        run: |
+          ./ngrok/ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+        shell: powershell
+
+      - name: Enable RDP and Configure User
+        run: |
+          # Enable RDP connections
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+
+          # Allow RDP through the firewall
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+          # Optional: Configure user authentication (usually enabled by default for RDP-Tcp)
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+          # Create a new user and add to Administrators group
+          $username = "runneradmin"
+          $password = "Password123*#@" # ***CHANGE THIS PASSWORD***
+
+          net user $username $password /add
+          net localgroup administrators $username /add
+
+          Write-Host "RDP user created: $username"
+          Write-Host "Remember to check the ngrok tunnel output for the connection address."
+        shell: powershell
+
+      - name: Start ngrok tunnel
+        run: |
+          Write-Host "Starting ngrok tunnel for RDP on port 3389..."
+          ./ngrok/ngrok.exe tcp 3389
+        shell: powershell
+        # This step will block and keep the job running as long as the tunnel is active.
+        # Look for the ngrok forwarding address in the logs of this step.
+        

@@ -40,7 +40,7 @@ jobs:
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
           # Create a new user and add to Administrators group
-          $username = "runneradmin"
+          $username = "runneradmin786"
           $password = "Password123*#@" # ***CHANGE THIS PASSWORD TO SOMETHING SECURE!***
 
           net user $username $password /add
